@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <title>Confatihomu — Global Marketplace | Instant Search · Homes · Building · Furniture</title>
+  <!-- Google Fonts + Tailwind + Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Leaflet CSS for interactive maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', 'Plus Jakarta Sans', system-ui; background: #faf9ff; }
+    .gradient-brand { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .btn-gradient { background: linear-gradient(100deg, #f97316, #ea580c); }
+    .toast-notification { position: fixed; bottom: 80px; right: 16px; background: #2d1a0e; color: white; padding: 10px 18px; border-radius: 50px; font-size: 13px; z-index: 1000; backdrop-filter: blur(8px); border-left: 3px solid #f97316; box-shadow: 0 8px 20px rgba(0,0,0,0.2); font-weight: 500; z-index: 1001; }
+    @media (max-width: 640px) {
+      .responsive-table thead { display: none; }
+      .responsive-table tr { display: block; margin-bottom: 1rem; border: 1px solid rgba(249,115,22,0.2); border-radius: 1rem; padding: 0.75rem; }
+      .responsive-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px dashed rgba(0,0,0,0.05); }
+      .responsive-table td:last-child { border-bottom: none; }
+      .responsive-table td::before { content: attr(data-label); font-weight: 600; color: #f97316; margin-right: 1rem; }
+    }
+    .logo-3d-scene { width: 55px; height: 55px; perspective: 1000px; display: inline-block; }
+    .logo-3d-cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1); cursor: pointer; }
+    .logo-3d-cube:hover { transform: rotateX(8deg) rotateY(18deg) rotateZ(2deg); }
+    .logo-face { position: absolute; width: 55px; height: 55px; background: linear-gradient(145deg, #f97316, #ea580c); border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: white; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-radius: 14px; backface-visibility: visible; }
+    .logo-front  { transform: translateZ(27.5px); background: linear-gradient(135deg, #f97316, #ea580c); }
+    .logo-back   { transform: rotateY(180deg) translateZ(27.5px); background: linear-gradient(135deg, #ea580c, #c2410c); }
+    .logo-right  { transform: rotateY(90deg) translateZ(27.5px); background: linear-gradient(135deg, #fdba74, #f97316); }
+    .logo-left   { transform: rotateY(-90deg) translateZ(27.5px); background: linear-gradient(135deg, #ffedd5, #fed7aa); color: #ea580c; }
+    .logo-top    { transform: rotateX(90deg) translateZ(27.5px); background: linear-gradient(135deg, #fef3c7, #ffedd5); color: #ea580c; }
+    .logo-bottom { transform: rotateX(-90deg) translateZ(27.5px); background: #c2410c; }
+    @media (max-width: 640px) { .logo-3d-scene { width: 48px; height: 48px; } .logo-face { width: 48px; height: 48px; font-size: 20px; transform: translateZ(24px); } .logo-front  { transform: translateZ(24px); } .logo-back   { transform: rotateY(180deg) translateZ(24px); } .logo-right  { transform: rotateY(90deg) translateZ(24px); } .logo-left   { transform: rotateY(-90deg) translateZ(24px); } .logo-top    { transform: rotateX(90deg) translateZ(24px); } .logo-bottom { transform: rotateX(-90deg) translateZ(24px); } }
+    .hero-bg-limited { background-image: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format'); background-size: cover; background-position: center 30%; position: relative; }
+    .hero-bg-limited::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 248, 240, 0.92); pointer-events: none; }
+    .white-bg-section { background: #ffffff; }
+    .product-card { transition: all 0.3s ease; }
+    .product-card:hover { transform: translateY(-8px); box-shadow: 0 25px 35px -12px rgba(0, 0, 0, 0.15); }
+    .product-chat-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+    .product-chat-card { background: white; border-radius: 2rem; width: 100%; max-width: 450px; height: 550px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px black; }
+    .product-chat-header { background: linear-gradient(135deg, #f97316, #ea580c); padding: 1rem; color: white; font-weight: bold; display: flex; justify-content: space-between; }
+    .product-chat-messages { flex: 1; overflow-y: auto; padding: 12px; background: #fef7f0; display: flex; flex-direction: column; gap: 8px; }
+    .chat-msg { max-width: 85%; padding: 8px 12px; border-radius: 20px; font-size: 13px; word-break: break-word; }
+    .chat-msg.sent { background: #f97316; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-msg.received { background: white; border: 1px solid #ffe0c4; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .product-chat-input { display: flex; padding: 12px; border-top: 1px solid #f0e2d4; background: white; gap: 8px; }
+    .product-chat-input input { flex: 1; border: 1px solid #ffe0c4; border-radius: 40px; padding: 10px 14px; outline: none; }
+    .product-chat-input button { background: #f97316; border: none; color: white; border-radius: 40px; padding: 0 18px; font-weight: bold; cursor: pointer; }
+    .business-detail-badge { background: linear-gradient(135deg, #fef3c7, #ffedd5); border-left: 3px solid #f97316; }
+    .mini-map { height: 120px; border-radius: 12px; overflow: hidden; margin-top: 8px; cursor: pointer; border: 1px solid #e5e7eb; }
+    .leaflet-container { border-radius: 12px; }
+    /* Instant search - no delay */
+    .instant-search { transition: none; }
+  </style>
+</head>
+<body>
+
+<div id="app" class="min-h-screen flex flex-col">
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-sm">
+    <div class="container mx-auto px-4 sm:px-6 py-3 lg:px-8 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3 cursor-pointer group" onclick="navigateTo('marketplace')">
+        <div class="logo-3d-scene"><div class="logo-3d-cube"><div class="logo-face logo-front"><i class="fas fa-home"></i></div><div class="logo-face logo-back"><i class="fas fa-store"></i></div><div class="logo-face logo-right"><i class="fas fa-tools"></i></div><div class="logo-face logo-left"><i class="fas fa-couch"></i></div><div class="logo-face logo-top"><i class="fas fa-chart-line"></i></div><div class="logo-face logo-bottom"><i class="fas fa-handshake"></i></div></div></div>
+        <div class="leading-tight"><div class="text-xl sm:text-2xl font-extrabold tracking-tight gradient-brand">Confatihomu</div><div class="text-[10px] sm:text-xs font-medium text-gray-500">building a better home for everybody.</div></div>
+      </div>
+      <div class="hidden md:flex items-center gap-6">
+        <button onclick="navigateTo('marketplace')" class="text-sm font-semibold text-gray-700 hover:text-orange-600 transition">Browse</button>
+        <button onclick="openAuthModal()" class="text-sm font-semibold text-gray-700 hover:text-orange-600 transition">Sell / Dashboard</button>
+        <button onclick="navigateTo('business')" class="text-sm font-semibold text-gray-700 hover:text-orange-600 transition">For Business</button>
+      </div>
+      <button id="mobileMenuBtn" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden bg-white/95 border-t px-4 py-3 flex flex-col gap-3 shadow-md">
+      <button onclick="navigateTo('marketplace'); toggleMobile()" class="text-left font-medium py-1">Browse</button>
+      <button onclick="openAuthModal(); toggleMobile()" class="text-left font-medium py-1">Sell / Dashboard</button>
+      <button onclick="navigateTo('business'); toggleMobile()" class="text-left font-medium py-1">For Business</button>
+    </div>
+  </header>
+  <main id="mainContent" class="flex-1"></main>
+  <footer class="bg-gray-900 text-gray-400 text-sm py-8 text-center border-t border-gray-800">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col items-center gap-3">
+        <div class="flex items-center gap-2 text-orange-400"><i class="fas fa-globe-africa"></i><span class="font-semibold text-white">Confatihomu Global</span></div>
+        <p class="text-xs italic">"building a better home for everybody."</p>
+        <div class="flex flex-wrap items-center justify-center gap-4 text-xs">
+          <a href="mailto:confatihomu@gmail.com" class="hover:text-orange-400 transition flex items-center gap-1"><i class="fas fa-envelope"></i> confatihomu@gmail.com</a>
+          <a href="tel:0709813266" class="hover:text-orange-400 transition flex items-center gap-1"><i class="fas fa-phone-alt"></i> 0709813266</a>
+        </div>
+        <p class="text-[11px] opacity-60">🌍 Global Marketplace · Instant Search · Homes · Building Materials · Furniture · Household · Live Locations</p>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- MODAL: Seller Sign In -->
+<div id="authModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+  <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gray-800"><i class="fas fa-store text-orange-500 mr-2"></i>Start Selling on Confatihomu</h3><button id="closeAuthModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button></div>
+    <p class="text-sm text-gray-600 mb-4">Join our global marketplace for homes, building materials, furniture & household items.</p>
+    <input type="email" id="sellerEmail" placeholder="Email address" class="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3">
+    <input type="text" id="sellerName" placeholder="Business / Store name" class="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3">
+    <input type="tel" id="sellerPhone" placeholder="Phone number (📞 Call & WhatsApp)" class="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3">
+    <input type="text" id="sellerAddress" placeholder="Business address (for Google Map location)" class="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3">
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      <input type="text" id="sellerLat" placeholder="Latitude" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+      <input type="text" id="sellerLng" placeholder="Longitude" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm">
+    </div>
+    <select id="sellerCategory" class="w-full border border-gray-300 rounded-xl px-4 py-3 mb-3">
+      <option value="">Select your primary category</option>
+      <option>Homes & Real Estate</option>
+      <option>Building Materials</option>
+      <option>Furniture</option>
+      <option>Household Items</option>
+      <option>Multiple Categories</option>
+    </select>
+    <textarea id="sellerBusinessDetails" placeholder="Tell buyers about your business..." rows="3" class="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4 text-sm"></textarea>
+    <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 mb-4 text-xs text-gray-600"><p class="font-bold text-orange-600">📍 Google Map Location</p><p>Add your business address to show an interactive map on your listings.</p></div>
+    <div class="flex items-center gap-2 mb-5"><input type="checkbox" id="agreeCheckbox" class="accent-orange-500 w-4 h-4"><label class="text-sm text-gray-700">I agree to the Terms &amp; Privacy Policy</label></div>
+    <button id="doSignInBtn" class="w-full btn-gradient py-3 rounded-xl font-bold text-white disabled:opacity-50" disabled>Start Selling →</button>
+  </div>
+</div>
+
+<script>
+  // ========== GLOBAL MARKETPLACE DATA ==========
+  let currentSeller = null;
+  let productChats = new Map();
+  let productViewHistory = new Map();
+  
+  function recordProductView(productId) {
+    if(!productId) return;
+    if(!productViewHistory.has(productId)) productViewHistory.set(productId, []);
+    const views = productViewHistory.get(productId);
+    views.push({ timestamp: Date.now(), dateStr: new Date().toISOString().slice(0,10) });
+    if(views.length > 500) views.shift();
+  }
+  
+  function getProductAnalytics(productId, period = 'all') {
+    const views = productViewHistory.get(productId) || [];
+    if(period === 'all') return views.length;
+    const now = Date.now();
+    const dayInMs = 86400000;
+    const limit = period === 'week' ? 7 : 30;
+    const cutoff = now - (limit * dayInMs);
+    return views.filter(v => v.timestamp >= cutoff).length;
+  }
+  
+  function initSampleAnalytics() {
+    const prodIds = ['h1','g1','g2','g3','g4','g5','g6','g7','g8','sp1','sp2'];
+    prodIds.forEach(pid => {
+      if(!productViewHistory.has(pid)) productViewHistory.set(pid, []);
+      const viewsArr = productViewHistory.get(pid);
+      for(let i=0;i<Math.floor(Math.random()*30)+5;i++) {
+        const daysAgo = Math.floor(Math.random() * 35);
+        viewsArr.push({ timestamp: Date.now() - daysAgo*86400000, dateStr: new Date(Date.now() - daysAgo*86400000).toISOString().slice(0,10) });
+      }
+    });
+  }
+  
+  // Global products
+  let globalProducts = [
+    { id: "h1", title: "Modern 3-Bedroom Villa with Garden", price: "$250,000", location: "Nairobi, KE", category: "Homes", img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=400&auto=format", sellerStore: "Elite Properties", sellerPhone: "+254712345000", sellerAddress: "Karen, Nairobi", lat: -1.316667, lng: 36.783333, businessDetails: "Luxury villa with modern finishes. 3 bedrooms, 3 baths, private garden, 24/7 security.", sellerId: "prop1" },
+    { id: "g1", title: "Premium Portland Cement 50kg", price: "$8.50", location: "Kampala, UG", category: "Building Materials", img: "https://picsum.photos/id/15/400/260", sellerStore: "Jinja Hardware", sellerPhone: "+256700123001", sellerAddress: "Plot 12, Jinja Road, Kampala", lat: 0.313611, lng: 32.581111, businessDetails: "Authorized dealer of Hima Cement. Bulk discounts available.", sellerId: "jinja1" },
+    { id: "g2", title: "Modern Oak Dining Table", price: "$450", location: "Nairobi, KE", category: "Furniture", img: "https://picsum.photos/id/106/400/260", sellerStore: "Urban Home", sellerPhone: "+254712345678", sellerAddress: "Westlands, Nairobi", lat: -1.264722, lng: 36.804444, businessDetails: "Handcrafted solid wood furniture. Custom sizes available. Free delivery.", sellerId: "urban1" },
+    { id: "g3", title: "LED Smart Ceiling Light", price: "$34.99", location: "Johannesburg, SA", category: "Household", img: "https://picsum.photos/id/91/400/260", sellerStore: "Jinja Hardware", sellerPhone: "+256700123001", sellerAddress: "Plot 12, Jinja Road, Kampala", lat: 0.313611, lng: 32.581111, businessDetails: "Energy-saving LED lights. 2-year warranty. Wholesale prices.", sellerId: "jinja1" },
+    { id: "g4", title: "Professional Hammer Drill Set", price: "$120", location: "Accra, GH", category: "Tools", img: "https://picsum.photos/id/96/400/260", sellerStore: "Tools Planet", sellerPhone: "+233501234567", sellerAddress: "Spintex Road, Accra", lat: 5.603717, lng: -0.186964, businessDetails: "Industrial grade tools. 1-year warranty. Delivery across Ghana.", sellerId: "tools1" },
+    { id: "g5", title: "Cozy 2-Bedroom Apartment", price: "$85,000", location: "Lagos, NG", category: "Homes", img: "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?q=80&w=400&auto=format", sellerStore: "Lagos Realty", sellerPhone: "+234802345678", sellerAddress: "Victoria Island, Lagos", lat: 6.428056, lng: 3.421944, businessDetails: "Secure apartment complex with pool, gym, and 24hr security.", sellerId: "prop2" },
+    { id: "g6", title: "Eco-friendly Paint 5L", price: "$42.90", location: "Lagos, NG", category: "Building Materials", img: "https://picsum.photos/id/22/400/260", sellerStore: "Prime Paints", sellerPhone: "+234803000111", sellerAddress: "Ikeja, Lagos", lat: 6.601838, lng: 3.351486, businessDetails: "Low VOC, washable paint. 50+ colors available. Free color mixing.", sellerId: "prime1" },
+    { id: "g7", title: "Ceramic Floor Tiles Box", price: "$35.00", location: "Nairobi, KE", category: "Building Materials", img: "https://picsum.photos/id/104/400/260", sellerStore: "Urban Home", sellerPhone: "+254712345678", sellerAddress: "Westlands, Nairobi", lat: -1.264722, lng: 36.804444, businessDetails: "Premium Italian design tiles. Water-resistant. Sample available.", sellerId: "urban1" },
+    { id: "g8", title: "Solar Powered Lamp", price: "$28.50", location: "Kampala, UG", category: "Household", img: "https://picsum.photos/id/13/400/260", sellerStore: "Jinja Hardware", sellerPhone: "+256700123001", sellerAddress: "Plot 12, Jinja Road", lat: 0.313611, lng: 32.581111, businessDetails: "Solar rechargeable. 12-hour backup. Perfect for off-grid areas.", sellerId: "jinja1" }
+  ];
+  
+  let sellersDB = {
+    "demo@confatihomu.com": {
+      id: "seller1", email: "demo@confatihomu.com", storeName: "Sarah's Hardware & Homes", phone: "+256700123456", address: "Shop 45, Kampala Central", lat: 0.313611, lng: 32.581111, category: "Building Materials & Homes", businessDetails: "Quality building materials supplier since 2010. Building a better home for everybody.",
+      products: [
+        { id: "sp1", name: "Premium Cement 50kg", price: "$8.50", category: "Building Materials", img: "https://picsum.photos/id/15/400/260", views: 124, lat: 0.313611, lng: 32.581111 },
+        { id: "sp2", name: "Energy LED Light", price: "$34.99", category: "Household", img: "https://picsum.photos/id/91/400/260", views: 89, lat: 0.313611, lng: 32.581111 }
+      ]
+    }
+  };
+  
+  function syncMarketplace() {
+    let all = [];
+    Object.values(sellersDB).forEach(s => {
+      s.products.forEach(p => {
+        all.push({ ...p, title: p.name, sellerStore: s.storeName, sellerPhone: s.phone, sellerAddress: s.address, lat: p.lat || s.lat || 0, lng: p.lng || s.lng || 0, businessDetails: s.businessDetails || "Quality products available.", location: s.address.split(',')[0] || s.address, sellerId: s.id, category: p.category });
+      });
+    });
+    globalProducts = [...all, ...globalProducts.filter(g => !g.id.startsWith("sp"))];
+  }
+  
+  function showToast(msg) { let t = document.createElement('div'); t.className = 'toast-notification'; t.innerHTML = `<i class="fas fa-info-circle text-orange-400 mr-2"></i>${msg}`; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); }
+  
+  function makePhoneCall(phone, storeName) { if(!phone) { showToast("📞 No phone number"); return; } let cleanPhone = phone.replace(/[^\d+]/g, ''); if (!cleanPhone.startsWith('+')) cleanPhone = '+' + cleanPhone; window.location.href = `tel:${cleanPhone}`; showToast(`📞 Calling ${storeName}`); }
+  function openFullWhatsApp(phone, productName, storeName) { if(!phone) { showToast("⚠️ No WhatsApp"); return; } let cleanPhone = phone.replace(/[^\d+]/g, ''); if (!cleanPhone.startsWith('+')) cleanPhone = '+' + cleanPhone; window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hello! I'm interested in "${productName}" from ${storeName} on Confatihomu.`)}`, '_blank'); showToast(`💬 WhatsApp with ${storeName}`); }
+  
+  function openProductChat(product) {
+    const productId = product.id;
+    if(!productChats.has(productId)) productChats.set(productId, []);
+    const modalDiv = document.createElement('div');
+    modalDiv.className = 'product-chat-modal';
+    modalDiv.innerHTML = `<div class="product-chat-card"><div class="product-chat-header"><span><i class="fas fa-comment-dots mr-2"></i>Chat about: ${product.title.substring(0,30)}</span><button id="closeChatBtn" class="text-white hover:text-gray-200 text-xl">&times;</button></div><div id="productChatMsgs" class="product-chat-messages"></div><div class="product-chat-input"><input type="text" id="productChatInput" placeholder="Type your message..." maxlength="300"><button id="sendProductMsgBtn"><i class="fas fa-paper-plane"></i> Send</button></div></div>`;
+    document.body.appendChild(modalDiv);
+    const renderMessages = () => { const container = document.getElementById('productChatMsgs'); if(!container) return; const msgs = productChats.get(productId) || []; const currentUser = currentSeller ? currentSeller.storeName : (localStorage.getItem('chatUserName') || 'Buyer'); container.innerHTML = msgs.map(m => `<div class="chat-msg ${m.sender === currentUser ? 'sent' : 'received'}"><strong class="text-xs block">${m.sender}</strong>${m.text}<div class="text-[9px] opacity-60 mt-1">${new Date(m.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div>`).join(''); container.scrollTop = container.scrollHeight; };
+    renderMessages();
+    document.getElementById('closeChatBtn').onclick = () => modalDiv.remove();
+    const sendMsg = () => { const input = document.getElementById('productChatInput'); const text = input.value.trim(); if(!text) return; let senderName = currentSeller ? currentSeller.storeName : (localStorage.getItem('chatUserName') || 'Guest Buyer'); if(!currentSeller && !localStorage.getItem('chatUserName')) { const guestName = prompt("Enter your name:","Buyer"); if(guestName) localStorage.setItem('chatUserName', guestName); senderName = localStorage.getItem('chatUserName') || 'Buyer'; } const newMsg = { id: Date.now().toString(), sender: senderName, text: text, timestamp: Date.now() }; productChats.set(productId, [...(productChats.get(productId) || []), newMsg]); input.value = ''; renderMessages(); };
+    document.getElementById('sendProductMsgBtn').onclick = sendMsg;
+    document.getElementById('productChatInput')?.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMsg(); });
+  }
+  
+  function createMiniMap(elementId, lat, lng, title) {
+    if(!lat || !lng || lat===0) return;
+    const container = document.getElementById(elementId);
+    if(!container) return;
+    container.innerHTML = '';
+    const map = L.map(elementId).setView([lat, lng], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' }).addTo(map);
+    L.marker([lat, lng]).addTo(map).bindPopup(title).openPopup();
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+  
+  // ========== INSTANT SEARCH - NO DEBOUNCE, NO PAUSING ==========
+  let searchTerm = "", activeCat = "all";
+  const cats = ["Homes","Building Materials","Furniture","Household","Tools"];
+  
+  function filterProductsFast(products, term, category) {
+    let filtered = products;
+    if(category !== "all") {
+      filtered = filtered.filter(p => p.category === category);
+    }
+    if(term.trim() !== "") {
+      const lowerTerm = term.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.title.toLowerCase().includes(lowerTerm) ||
+        p.sellerStore.toLowerCase().includes(lowerTerm) ||
+        p.location.toLowerCase().includes(lowerTerm) ||
+        p.category.toLowerCase().includes(lowerTerm) ||
+        (p.businessDetails && p.businessDetails.toLowerCase().includes(lowerTerm)) ||
+        (p.price && p.price.toString().includes(lowerTerm))
+      );
+    }
+    return filtered;
+  }
+  
+  // Direct instant search - re-renders on every keystroke immediately (fast DOM diff)
+  function performInstantSearch() {
+    const searchInput = document.getElementById("heroSearchInput");
+    if(searchInput) {
+      searchTerm = searchInput.value;
+      renderMarketplaceResults();
+    }
+  }
+  
+  function renderMarketplaceResults() {
+    syncMarketplace();
+    let filtered = filterProductsFast(globalProducts, searchTerm, activeCat);
+    
+    const productsGridHtml = filtered.length === 0 ? 
+      '<div class="col-span-full text-center py-20 text-gray-500"><i class="fas fa-search text-6xl mb-4 opacity-40"></i><p class="text-xl font-medium">No listings found</p><p class="text-sm mt-2">Try "cement", "villa", "nairobi", or "sofa"</p><button onclick="window.clearSearchAndFilters()" class="mt-4 text-orange-500 underline font-semibold">Clear search →</button></div>' : 
+      filtered.map((p, idx) => `<div class="product-card rounded-2xl bg-white shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300"><div class="relative"><img src="${p.img}" class="h-56 w-full object-cover" loading="lazy" onerror="this.src='https://picsum.photos/id/42/400/260'"><span class="absolute top-3 right-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-semibold">${p.category === 'Homes' ? '🏠 HOME' : p.category}</span></div><div class="p-5"><div class="flex justify-between items-start gap-2"><h3 class="font-bold text-gray-800 text-lg">${p.title}</h3><span class="text-orange-600 font-bold text-xl">${p.price}</span></div><div class="mt-2"><div class="business-detail-badge rounded-xl p-3 text-xs text-gray-700"><i class="fas fa-store text-orange-500 mr-1"></i> <span class="font-semibold">${p.sellerStore}</span><br><i class="fas fa-info-circle text-orange-500 mr-1 mt-1"></i> ${p.businessDetails ? p.businessDetails.substring(0,70) : "Quality products available"}<br><i class="fas fa-map-marker-alt text-red-500 mr-1 mt-1"></i> ${p.location}</div></div><div id="miniMap_${idx}_${p.id.replace(/[^a-zA-Z0-9]/g, '')}" class="mini-map" style="height:120px; cursor:pointer;" onclick="window.openFullMap('${p.lat}', '${p.lng}', '${p.sellerStore.replace(/'/g, "\\'")}')"></div><div class="flex gap-2 mt-3"><button class="call-btn flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-1" data-phone="${p.sellerPhone}" data-store="${p.sellerStore}"><span>📞</span> Call</button><button class="whatsapp-btn flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-1" data-phone="${p.sellerPhone}" data-product="${p.title.replace(/'/g, "\\'")}" data-store="${p.sellerStore}"><i class="fab fa-whatsapp"></i> WhatsApp</button><button class="product-chat-btn flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-xl text-sm font-semibold transition flex items-center justify-center gap-1" data-product='${JSON.stringify(p).replace(/'/g, "&apos;")}'><i class="fas fa-comment"></i> Chat</button></div></div></div>`).join('');
+    
+    const productsGrid = document.getElementById("productsGrid");
+    const productsCount = document.getElementById("productsCount");
+    if(productsGrid) productsGrid.innerHTML = productsGridHtml;
+    if(productsCount) productsCount.innerHTML = `<i class="fas fa-globe mr-1"></i> ${filtered.length} listing${filtered.length !== 1 ? 's' : ''} found instantly`;
+    
+    // Attach event listeners to new buttons
+    document.querySelectorAll(".call-btn").forEach(btn => btn.addEventListener("click", (e) => makePhoneCall(btn.dataset.phone, btn.dataset.store)));
+    document.querySelectorAll(".whatsapp-btn").forEach(btn => btn.addEventListener("click", (e) => openFullWhatsApp(btn.dataset.phone, btn.dataset.product, btn.dataset.store)));
+    document.querySelectorAll(".product-chat-btn").forEach(btn => btn.addEventListener("click", (e) => { const prodData = JSON.parse(btn.dataset.product.replace(/&apos;/g, "'")); recordProductView(prodData.id); openProductChat(prodData); }));
+    
+    // Create mini maps for each product
+    filtered.forEach((p, idx) => {
+      const mapId = `miniMap_${idx}_${p.id.replace(/[^a-zA-Z0-9]/g, '')}`;
+      if(p.lat && p.lng && p.lat !== 0) {
+        setTimeout(() => createMiniMap(mapId, p.lat, p.lng, p.sellerStore), 50);
+      }
+    });
+    
+    filtered.forEach(p => recordProductView(p.id));
+  }
+  
+  function renderMarketplace() {
+    syncMarketplace();
+    const heroHTML = `<div class="hero-bg-limited"><section class="relative py-12 sm:py-16"><div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10"><div class="max-w-4xl mx-auto text-center"><div class="text-sm font-semibold text-orange-600 mb-2 tracking-wide">🌍 GLOBAL MARKETPLACE · INSTANT SEARCH</div><h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight">Find your dream <span class="gradient-brand">home & everything</span> for it</h1><p class="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto mt-4 italic">"building a better home for everybody."</p><p class="text-gray-500 text-sm mt-2">📍 Live Locations · Homes · Building Materials · Furniture · Household</p></div><div class="max-w-2xl mx-auto mt-10"><div class="relative shadow-lg rounded-full"><i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-orange-400 text-lg"></i><input type="text" id="heroSearchInput" placeholder="Instant search: villa, cement, sofa, nairobi, lagos..." value="${searchTerm.replace(/"/g, '&quot;')}" class="instant-search w-full h-14 rounded-full border-0 bg-white/90 pl-14 pr-6 text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2" autocomplete="off" spellcheck="false"><button id="clearSearchBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-500 transition-all ${searchTerm ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}"><i class="fas fa-times-circle text-xl"></i></button></div><div class="text-center mt-2 text-xs text-gray-500"><i class="fas fa-bolt text-orange-500"></i> Type anything - results appear instantly</div></div><div class="flex flex-wrap gap-2 justify-center mt-8"><button data-cat="all" class="cat-filter rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${activeCat === 'all' ? 'bg-orange-500 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'}">All</button>${cats.map(c => `<button data-cat="${c}" class="cat-filter rounded-full px-5 py-2.5 text-sm font-semibold transition-all ${activeCat === c ? 'bg-orange-500 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'}"><i class="fas ${c === 'Homes' ? 'fa-home' : c === 'Building Materials' ? 'fa-hard-hat' : c === 'Furniture' ? 'fa-couch' : c === 'Household' ? 'fa-kitchen-set' : 'fa-tools'} mr-1"></i>${c}</button>`).join('')}</div></div></section></div>
+      <div class="white-bg-section py-12"><div class="container mx-auto px-4 sm:px-6 lg:px-8"><div id="productsCount" class="mb-4 text-sm text-gray-500"><i class="fas fa-globe mr-1"></i> Loading...</div><div id="productsGrid" class="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div></div></div>`;
+    document.getElementById("mainContent").innerHTML = heroHTML;
+    
+    const searchInput = document.getElementById("heroSearchInput");
+    if(searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        searchTerm = e.target.value;
+        renderMarketplaceResults();
+        const clearBtn = document.getElementById("clearSearchBtn");
+        if(clearBtn) {
+          if(searchTerm) { clearBtn.style.opacity = "1"; clearBtn.style.pointerEvents = "auto"; }
+          else { clearBtn.style.opacity = "0"; clearBtn.style.pointerEvents = "none"; }
+        }
+      });
+    }
+    
+    document.getElementById("clearSearchBtn")?.addEventListener("click", () => {
+      searchTerm = "";
+      const searchInputElem = document.getElementById("heroSearchInput");
+      if(searchInputElem) searchInputElem.value = "";
+      renderMarketplaceResults();
+      showToast("🔍 Search cleared");
+    });
+    
+    document.querySelectorAll(".cat-filter").forEach(btn => btn.addEventListener("click", () => {
+      activeCat = btn.getAttribute("data-cat");
+      renderMarketplaceResults();
+    }));
+    
+    renderMarketplaceResults();
+  }
+  
+  window.openFullMap = (lat, lng, title) => { if(lat && lng && lat !== 0) window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank'); else showToast("📍 Location not available"); };
+  window.clearSearchAndFilters = () => { searchTerm = ""; activeCat = "all"; const searchInput = document.getElementById("heroSearchInput"); if(searchInput) searchInput.value = ""; renderMarketplaceResults(); showToast("✨ All filters cleared"); };
+  
+  // ========== SELLER DASHBOARD (simplified) ==========
+  function renderSellerDashboard() {
+    if(!currentSeller) { renderMarketplace(); return; }
+    const seller = currentSeller;
+    const weekViews = seller.products.reduce((sum, p) => sum + getProductAnalytics(p.id, 'week'), 0);
+    const monthViews = seller.products.reduce((sum, p) => sum + getProductAnalytics(p.id, 'month'), 0);
+    const totalViewsAll = seller.products.reduce((sum, p) => sum + getProductAnalytics(p.id, 'all'), 0);
+    const html = `<div class="min-h-screen bg-gradient-to-br from-gray-50 to-orange-50/30 py-10"><div class="container mx-auto px-4 sm:px-6 lg:px-8"><div class="flex flex-wrap justify-between items-center gap-4 mb-8"><div><h1 class="text-3xl font-bold text-gray-800"><i class="fas fa-map-marker-alt text-orange-500 mr-2"></i>Seller Dashboard</h1><p class="text-gray-600">${seller.storeName} · ${seller.email}</p><p class="text-xs text-orange-600 mt-1">📍 Your business location is shown on Google Maps</p></div><button id="logoutBtn" class="bg-gray-800 hover:bg-gray-900 text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-md"><i class="fas fa-sign-out-alt mr-2"></i>Sign Out</button></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"><div class="bg-white rounded-2xl p-6 shadow-sm"><span class="text-3xl">📞</span><div class="text-3xl font-bold mt-3">${weekViews}</div><div class="text-gray-500 text-sm">Views (7d)</div></div><div class="bg-white rounded-2xl p-6 shadow-sm"><i class="fab fa-whatsapp text-2xl text-green-500"></i><div class="text-3xl font-bold mt-3">${monthViews}</div><div class="text-gray-500 text-sm">Views (30d)</div></div><div class="bg-white rounded-2xl p-6 shadow-sm"><i class="fas fa-chart-simple text-2xl text-orange-500"></i><div class="text-3xl font-bold mt-3">${totalViewsAll}</div><div class="text-gray-500 text-sm">Total Views</div></div></div><div class="bg-white rounded-2xl p-6 mb-8 shadow-sm"><h3 class="font-bold text-xl mb-4"><i class="fas fa-store text-orange-500 mr-2"></i>Business Profile with Map</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-5"><div><label class="block text-sm font-medium">📞 Phone</label><input id="editPhone" value="${seller.phone}" class="w-full border rounded-xl px-4 py-2.5"></div><div><label class="block text-sm font-medium">📍 Address</label><input id="editAddress" value="${seller.address}" class="w-full border rounded-xl px-4 py-2.5"></div></div><div class="grid grid-cols-2 gap-2 mt-3"><div><label class="block text-sm font-medium">Latitude</label><input id="editLat" value="${seller.lat || ''}" class="w-full border rounded-xl px-4 py-2.5"></div><div><label class="block text-sm font-medium">Longitude</label><input id="editLng" value="${seller.lng || ''}" class="w-full border rounded-xl px-4 py-2.5"></div></div><div class="mt-3"><label class="block text-sm font-medium">🏪 Business Description</label><textarea id="editBusinessDetails" rows="2" class="w-full border rounded-xl px-4 py-2.5">${seller.businessDetails || ""}</textarea></div><button id="updateProfileBtn" class="mt-5 bg-orange-500 text-white px-5 py-2 rounded-full text-sm font-semibold">Update Profile & Location</button></div><div class="bg-white rounded-2xl shadow-sm overflow-hidden"><div class="p-5 border-b flex justify-between"><h3 class="font-bold text-xl"><i class="fas fa-boxes text-orange-500 mr-2"></i>Your Listings</h3><button id="openProductModal" class="bg-orange-500 text-white px-4 py-2 rounded-full text-sm"><i class="fas fa-plus"></i> Add Listing</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="px-5 py-4">Product</th><th>Price</th><th>Views</th><th>Actions</th></tr></thead><tbody id="sellerProductsTable"></tbody></table></div></div></div></div>`;
+    document.getElementById("mainContent").innerHTML = html;
+    const renderTable = () => { let tbody = document.getElementById("sellerProductsTable"); if(!tbody) return; tbody.innerHTML = seller.products.map(p => `<tr class="border-b"><td class="px-5 py-4 flex gap-3 items-center"><img src="${p.img}" class="w-10 h-10 rounded-lg object-cover"> ${p.name}</td><td class="px-5 py-4 font-semibold">${p.price}</td><td class="px-5 py-4">${getProductAnalytics(p.id, 'all')}</td><td class="px-5 py-4"><button class="delete-prod text-red-500" data-id="${p.id}"><i class="fas fa-trash-alt"></i></button></td></tr>`).join(''); document.querySelectorAll(".delete-prod").forEach(btn => btn.onclick = () => { seller.products = seller.products.filter(p => p.id !== btn.dataset.id); renderSellerDashboard(); renderMarketplace(); }); };
+    renderTable();
+    document.getElementById("logoutBtn").onclick = () => { currentSeller = null; renderMarketplace(); };
+    document.getElementById("updateProfileBtn").onclick = () => { seller.phone = document.getElementById("editPhone").value; seller.address = document.getElementById("editAddress").value; seller.lat = parseFloat(document.getElementById("editLat").value) || 0; seller.lng = parseFloat(document.getElementById("editLng").value) || 0; seller.businessDetails = document.getElementById("editBusinessDetails").value; showToast("✅ Profile updated! Map location saved."); renderSellerDashboard(); renderMarketplace(); };
+    document.getElementById("openProductModal").onclick = () => { const modal = document.createElement('div'); modal.className = "fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"; modal.innerHTML = `<div class="bg-white rounded-2xl max-w-md w-full p-6"><h3 class="text-xl font-bold mb-4">Add New Listing</h3><input id="prodName" placeholder="Product name" class="w-full border rounded-xl p-2 mb-2"><input id="prodPrice" placeholder="Price" class="w-full border rounded-xl p-2 mb-2"><select id="prodCat" class="w-full border rounded-xl p-2 mb-2"><option>Homes</option><option>Building Materials</option><option>Furniture</option><option>Household</option><option>Tools</option></select><div class="grid grid-cols-2 gap-2 mb-2"><input id="prodLat" placeholder="Latitude" class="border rounded-xl p-2 text-sm"><input id="prodLng" placeholder="Longitude" class="border rounded-xl p-2 text-sm"></div><input type="file" id="prodImg" accept="image/*" class="w-full mb-3"><div class="flex gap-2"><button id="confirmAdd" class="bg-orange-500 text-white flex-1 py-2 rounded-xl">Publish</button><button id="cancelAdd" class="bg-gray-200 flex-1 py-2 rounded-xl">Cancel</button></div></div>`; document.body.appendChild(modal); document.getElementById("cancelAdd").onclick = () => modal.remove(); document.getElementById("confirmAdd").onclick = async () => { let name = document.getElementById("prodName").value.trim(), price = document.getElementById("prodPrice").value.trim(), cat = document.getElementById("prodCat").value, file = document.getElementById("prodImg").files[0]; let imgUrl = "https://picsum.photos/id/42/400/260"; if(file) { let reader = new FileReader(); imgUrl = await new Promise(resolve => { reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); }); } if(!name||!price) return showToast("Name & price required"); const newId = "sp"+Date.now(); let prodLat = parseFloat(document.getElementById("prodLat").value); let prodLng = parseFloat(document.getElementById("prodLng").value); seller.products.push({ id: newId, name, price, category: cat, img: imgUrl, views: 0, lat: isNaN(prodLat) ? (seller.lat || 0) : prodLat, lng: isNaN(prodLng) ? (seller.lng || 0) : prodLng }); if(!productViewHistory.has(newId)) productViewHistory.set(newId, []); modal.remove(); renderSellerDashboard(); renderMarketplace(); }; };
+  }
+  
+  // ========== AUTH & INIT ==========
+  const authModal = document.getElementById("authModal"), agreeCheck = document.getElementById("agreeCheckbox"), signBtn = document.getElementById("doSignInBtn");
+  agreeCheck?.addEventListener("change", () => signBtn.disabled = !agreeCheck.checked);
+  window.openAuthModal = () => authModal.classList.remove("hidden");
+  function closeAuthModal() { authModal.classList.add("hidden"); }
+  document.getElementById("closeAuthModal")?.addEventListener("click", closeAuthModal);
+  window.addEventListener("click", (e) => { if(e.target === authModal) closeAuthModal(); });
+  document.getElementById("doSignInBtn")?.addEventListener("click", () => {
+    if(!agreeCheck.checked) return alert("Accept terms");
+    let email = document.getElementById("sellerEmail").value.trim(), store = document.getElementById("sellerName").value.trim(), phone = document.getElementById("sellerPhone").value.trim(), addr = document.getElementById("sellerAddress").value.trim(), lat = parseFloat(document.getElementById("sellerLat").value), lng = parseFloat(document.getElementById("sellerLng").value), bizDetails = document.getElementById("sellerBusinessDetails").value.trim();
+    if(!email) return alert("Email required");
+    let seller = sellersDB[email];
+    if(!seller) seller = { id:"s"+Date.now(), email, storeName: store||"My Business", phone: phone||"+256", address: addr||"Kampala", lat: isNaN(lat) ? 0 : lat, lng: isNaN(lng) ? 0 : lng, businessDetails: bizDetails || "Quality products. Building a better home for everybody.", products: [] }, sellersDB[email]=seller;
+    else { if(store) seller.storeName=store; if(phone) seller.phone=phone; if(addr) seller.address=addr; if(!isNaN(lat)) seller.lat=lat; if(!isNaN(lng)) seller.lng=lng; if(bizDetails) seller.businessDetails=bizDetails; }
+    currentSeller = seller; closeAuthModal(); renderSellerDashboard();
+  });
+  function navigateTo(view) { if(view === 'marketplace') renderMarketplace(); else if(view === 'business') renderBusinessPage(); else if(view === 'dashboard' && currentSeller) renderSellerDashboard(); else if(view === 'dashboard' && !currentSeller) openAuthModal(); let mobile = document.getElementById("mobileMenu"); if(mobile) mobile.classList.add("hidden"); }
+  function renderBusinessPage() { document.getElementById("mainContent").innerHTML = `<div class="py-20 text-center"><div class="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg mb-5"><i class="fas fa-map-marker-alt text-3xl"></i></div><h2 class="text-3xl font-bold">Sell on Confatihomu</h2><p class="text-gray-600 mt-3 max-w-md mx-auto">Add your business location on Google Maps. List homes, building materials, furniture, or household items.</p><button onclick="openAuthModal()" class="mt-8 btn-gradient text-white px-8 py-3 rounded-full font-bold">Start Selling →</button></div>`; }
+  function toggleMobile() { document.getElementById("mobileMenu")?.classList.toggle("hidden"); }
+  document.getElementById("mobileMenuBtn")?.addEventListener("click", toggleMobile);
+  window.navigateTo = navigateTo; window.openAuthModal = openAuthModal;
+  initSampleAnalytics();
+  renderMarketplace();
+</script>
+</body>
+</html>
